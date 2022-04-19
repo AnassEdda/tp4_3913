@@ -111,13 +111,12 @@ public class Proto {
                         try{
                             complexite += CalculMetriques.wmc("jfreechart/"+line.substring(2, line.length()));
                             bc += CalculMetriques.classeBC("jfreechart/"+line.substring(2, line.length()));
-                        }catch(Exception e){
-                        // Continuer                      
+                        } catch(Exception e){
+                            // Continuer                      
                         }
                         // Fin pour la tâche 2
                     }
-                }
-                catch(IndexOutOfBoundsException e){
+                } catch(IndexOutOfBoundsException e){
                     // Ne rien faire car ce n'est pas un .java
                 }
             }
@@ -125,8 +124,7 @@ public class Proto {
             if(nbrClasses != 0) {
                 mWMC.add((float) (complexite / nbrClasses));
                 mcBC.add((float) (bc / nbrClasses));
-            }
-            else {
+            } else {
                 mWMC.add((float) 0);
                 mcBC.add((float) 0);
             }
