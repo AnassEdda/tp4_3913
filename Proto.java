@@ -7,10 +7,16 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
+
+import TP1.src.CalculMetriques;
   
 public class Proto {
 
-    public static void main(String[] args) throws IOException {
+    public static ArrayList<Float> mWMC = new ArrayList<>();
+    public static ArrayList<Float> mcBC = new ArrayList<>();
+
+    public static void main(String[] args) throws Exception {
 
         System.out.println("--Début de la TACHE 1--");
         try (Scanner entree1 = new Scanner(System.in)) {
@@ -35,6 +41,7 @@ public class Proto {
         }
     } 
 
+
     // Pour prendre les ID-version
     public static ArrayList<String> version(String path, String dossier) throws IOException {
         
@@ -45,7 +52,7 @@ public class Proto {
         // add the list of commands to a list
         builderList.add("cmd.exe");
         builderList.add("/C");
-        builderList.add("git clone " + path + " && cd " + dossier + " && git rev-list --all");
+        builderList.add("git clone " + path + " && cd " + dossier + " && git rev-list --all"); 
   
         try {
             // Using the list , trigger the command
@@ -73,8 +80,9 @@ public class Proto {
         return id;
     }
 
+
     // Pour prendre les informations en fonction de l'ID
-    public static ArrayList<Integer> nmbClasses(String dossier, ArrayList<String> id) throws IOException{
+    public static ArrayList<Integer> nmbClasses(String dossier, ArrayList<String> id) throws Exception{
 
         ArrayList<Integer> nc = new ArrayList<>();
         List<String> builderList = new ArrayList<>();
@@ -92,25 +100,50 @@ public class Proto {
 
             BufferedReader reader  = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
-            Integer nbrClasses = 0;
+            Integer nbrClasses = 0, complexite = 0;
+            float bc = 0;
             // On compte le nombre de classes java
             while ((line = reader.readLine()) != null){
-                if(line.substring(line.length()-5, line.length()).equals(".java"))
-                    nbrClasses++;
+                try{
+                    if(line.substring(line.length()-5, line.length()).equals(".java")){
+                        nbrClasses++;
+                        // Pour la tache 2
+                        try{
+                            complexite += CalculMetriques.wmc("jfreechart/"+line.substring(2, line.length()));
+                            bc += CalculMetriques.classeBC("jfreechart/"+line.substring(2, line.length()));
+                        }catch(Exception e){
+                        // Continuer                      
+                        }
+                        // Fin pour la tâche 2
+                    }
+                }
+                catch(IndexOutOfBoundsException e){
+                    // Ne rien faire car ce n'est pas un .java
+                }
             }
+            // Pour la tache 2
+            if(nbrClasses != 0) {
+                mWMC.add((float) (complexite / nbrClasses));
+                mcBC.add((float) (bc / nbrClasses));
+            }
+            else {
+                mWMC.add((float) 0);
+                mcBC.add((float) 0);
+            }
+            // Fin pour la tâche 2
             nc.add(nbrClasses);
         }
         return nc;                           
     }
 
+
     // Pour mettre les informations ID et le nombre de classes dans le CSV
     public static void csv(ArrayList<String> id,ArrayList<Integer> nc){
             
-        
-        try (PrintWriter writer = new PrintWriter(new File("tache1.csv"))) {
+        try (PrintWriter writer = new PrintWriter(new File("tache1et2.csv"))) {
             StringBuilder sb = new StringBuilder();
 
-            // Premiière colonne des id-versions
+            // Première colonne des id-versions
             for(int i=0 ; i<id.size() ; i++)
                 sb.append(id.get(i) + ",");
 
@@ -120,6 +153,20 @@ public class Proto {
             for(int j=0 ; j<nc.size() ; j++)
                 sb.append(nc.get(j) + ",");
 
+            sb.append("\n");
+
+            // Pour la tache 2
+            // Troisième colonne de la moyenne WMC
+            for(int x=0 ; x<mWMC.size() ; x++)
+                sb.append(mWMC.get(x) + ",");
+
+            sb.append("\n");
+
+            // Deuxième colonne de la moyenne de classe_BC
+            for(int y=0 ; y<mcBC.size() ; y++)
+                sb.append(mcBC.get(y) + ",");
+            // Fin pour la tâche 2
+
             writer.write(sb.toString());
             writer.close();
 
@@ -127,4 +174,6 @@ public class Proto {
             System.out.println(e.getMessage());
         }
     }
+
+
 }
